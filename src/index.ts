@@ -52,13 +52,23 @@ const info = <const>{
     type: ParameterType.BOOL,
     default: false,
   },
+  /** Whether or not to download the audio response automatically after recording ends. If true, the 'response' value will be the name of the downloaded file rather than a base64 representation of the data. Default is false. */
+  local_download: {
+    type: ParameterType.BOOL,
+    default: false,
+  },
+  /** If local_download is true, this sets the base file name of the downloaded file, which will be followed by a timestamp. The default is 'audio-response'. */
+  download_file_name: {
+    type: ParameterType.STRING,
+    default: 'audio-response',
+  },
 },
 data: {
   /** The time, since the onset of the stimulus, for the participant to click the done button. If the button is not clicked (or not enabled), then `rt` will be `null`. */
   rt: {
     type: ParameterType.INT,
   },
-  /** The base64-encoded audio data. */
+  /** The base64-encoded audio data (if local_download is false) or name of the downloaded file (if local_download is true). */
   response: {
     type: ParameterType.STRING,
   },
@@ -165,6 +175,15 @@ class VoiceResponsePlugin implements JsPsychPlugin<Info> {
     this.stop_event_handler = () => {
       const data = new Blob(this.recorded_data_chunks, { type: this.recorded_data_chunks[0].type });
       this.audio_url = URL.createObjectURL(data);
+      if (trial.local_download) {
+        const link = document.createElement("a");
+        link.href = this.audio_url;
+        const filename = `${trial.download_file_name}-${Date.now()}.wav`;
+        link.download = filename;
+        link.click();
+        this.response = filename;
+        this.load_resolver();
+      }
       const reader = new FileReader();
       reader.addEventListener("load", () => {
         const base64 = (reader.result as string).split(",")[1];
