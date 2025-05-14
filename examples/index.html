@@ -24,7 +24,8 @@
   const trial = {
     type: jsPsychPluginVoiceResponse,
     stimulus: "Say something!",
-    allow_playback: true
+    allow_playback: true,
+    local_download: true,
   };
 
   jsPsych.run([init_mic, trial]);
