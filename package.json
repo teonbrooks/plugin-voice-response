@@ -20,6 +20,7 @@
     "test:watch": "npm test -- --watch",
     "tsc": "tsc",
     "build": "rollup --config",
+    "buildMicCheck": "npx tsc src/mic_check.ts --target esnext --lib ESNext --types node,audioworklet --skipLibCheck true --outDir dist",
     "build:watch": "npm run build -- --watch"
   },
   "repository": {
@@ -40,11 +41,12 @@
   },
   "homepage": "/plugin-voice-response/README.md",
   "dependencies": {
-    "jspsych": "^8.0.0",
     "@citation-js/core": "^0.7.14",
-    "@citation-js/plugin-software-formats": "^0.6.1",
     "@citation-js/plugin-bibtex": "^0.7.14",
-    "@citation-js/plugin-cff": "^0.6.1"
+    "@citation-js/plugin-cff": "^0.6.1",
+    "@citation-js/plugin-software-formats": "^0.6.1",
+    "@types/audioworklet": "^0.0.75",
+    "jspsych": "^8.0.0"
   },
   "devDependencies": {
     "@jspsych/config": "^3.2.2",
