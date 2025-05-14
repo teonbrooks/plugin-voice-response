@@ -13,13 +13,23 @@
 
 <body></body>
 <script>
-  const jsPsych = initJsPsych();
+  const jsPsych = initJsPsych({
+    on_finish: function () {
+      jsPsych.data.displayData();
+    }
+  });
 
-  const trial = {
-    type: jsPsychPluginVoiceResponse
+  const init_mic = {
+    type: jsPsychInitializeMicrophone
   };
 
-  jsPsych.run([trial])
+  const trial = {
+    type: jsPsychPluginVoiceResponse,
+    stimulus: "Say something!",
+    allow_playback: true
+  };
+
+  jsPsych.run([init_mic, trial]);
 </script>
 
 </html>
