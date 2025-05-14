@@ -4,22 +4,30 @@
 <head>
   <title>jsPsychPluginVoiceResponse Example</title>
   <script src="https://unpkg.com/jspsych"></script>
-  <!-- Load the published plugin package here, e.g.
-<script src="https://unpkg.com/plugin-voice-response"></script>
-<script src="../dist/index.global.js"></script> -->
-  <script src="../dist/index.global.js"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-initialize-microphone@2.1.0"></script>
+  <script src="../dist/index.browser.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/jspsych/css/jspsych.css">
 </head>
 
 <body></body>
 <script>
-  const jsPsych = initJsPsych();
+  const jsPsych = initJsPsych({
+    on_finish: function () {
+      jsPsych.data.displayData();
+    }
+  });
 
-  const trial = {
-    type: jsPsychPluginVoiceResponse
+  const init_mic = {
+    type: jsPsychInitializeMicrophone
   };
 
-  jsPsych.run([trial])
+  const trial = {
+    type: jsPsychPluginVoiceResponse,
+    stimulus: "Say something!",
+    allow_playback: true
+  };
+
+  jsPsych.run([init_mic, trial]);
 </script>
 
 </html>
