@@ -1,6 +1,6 @@
 import { JsPsych, JsPsychPlugin, ParameterType, TrialType } from "jspsych";
 import { pipeline } from "@huggingface/transformers";
-import { WaveFile } from 'wavefile';
+import { WaveFile } from "wavefile";
 
 import { version } from "../package.json";
 
@@ -8,87 +8,87 @@ const info = <const>{
   name: "plugin-voice-response",
   version: version,
   parameters: {
-  /** The HTML content to be displayed. */
-  stimulus: {
-    type: ParameterType.HTML_STRING,
-    default: undefined,
+    /** The HTML content to be displayed. */
+    stimulus: {
+      type: ParameterType.HTML_STRING,
+      default: undefined,
+    },
+    /** How long to display the stimulus in milliseconds. The visibility CSS property of the stimulus will be set to `hidden` after this time has elapsed. If this is null, then the stimulus will remain visible until the trial ends. */
+    stimulus_duration: {
+      type: ParameterType.INT,
+      default: null,
+    },
+    /** The maximum length of the recording, in milliseconds. The default value is intentionally set low because of the potential to accidentally record very large data files if left too high. You can set this to `null` to allow the participant to control the length of the recording via the done button, but be careful with this option as it can lead to crashing the browser if the participant waits too long to stop the recording.  */
+    recording_duration: {
+      type: ParameterType.INT,
+      default: 2000,
+    },
+    /** Whether to show a button on the screen that the participant can click to finish the recording. */
+    show_done_button: {
+      type: ParameterType.BOOL,
+      default: true,
+    },
+    /** The label for the done button. */
+    done_button_label: {
+      type: ParameterType.STRING,
+      default: "Continue",
+    },
+    /** The label for the record again button enabled when `allow_playback: true`.
+     */
+    record_again_button_label: {
+      type: ParameterType.STRING,
+      default: "Record again",
+    },
+    /** The label for the accept button enabled when `allow_playback: true`. */
+    accept_button_label: {
+      type: ParameterType.STRING,
+      default: "Continue",
+    },
+    /** Whether to allow the participant to listen to their recording and decide whether to rerecord or not. If `true`, then the participant will be shown an interface to play their recorded audio and click one of two buttons to either accept the recording or rerecord. If rerecord is selected, then stimulus will be shown again, as if the trial is starting again from the beginning. */
+    allow_playback: {
+      type: ParameterType.BOOL,
+      default: false,
+    },
+    /** If `true`, then an [Object URL](https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL) will be generated and stored for the recorded audio. Only set this to `true` if you plan to reuse the recorded audio later in the experiment, as it is a potentially memory-intensive feature. */
+    save_audio_url: {
+      type: ParameterType.BOOL,
+      default: true,
+    },
+    /** Whether or not to download the audio response automatically after recording ends. If true, the 'response' value will be the name of the downloaded file rather than a base64 representation of the data. Default is false. */
+    local_download: {
+      type: ParameterType.BOOL,
+      default: false,
+    },
+    /** If local_download is true, this sets the base file name of the downloaded file, which will be followed by a timestamp. The default is 'audio-response'. */
+    download_file_name: {
+      type: ParameterType.STRING,
+      default: "audio-response",
+    },
   },
-  /** How long to display the stimulus in milliseconds. The visibility CSS property of the stimulus will be set to `hidden` after this time has elapsed. If this is null, then the stimulus will remain visible until the trial ends. */
-  stimulus_duration: {
-    type: ParameterType.INT,
-    default: null,
+  data: {
+    /** The time, since the onset of the stimulus, for the participant to click the done button. If the button is not clicked (or not enabled), then `rt` will be `null`. */
+    rt: {
+      type: ParameterType.INT,
+    },
+    /** The base64-encoded audio data (if local_download is false) or name of the downloaded file (if local_download is true). */
+    response: {
+      type: ParameterType.STRING,
+    },
+    /** The HTML content that was displayed on the screen. */
+    stimulus: {
+      type: ParameterType.HTML_STRING,
+    },
+    /** This is an estimate of when the stimulus appeared relative to the start of the audio recording. The plugin is configured so that the recording should start prior to the display of the stimulus. We have not yet been able to verify the accuracy of this estimate with external measurement devices. */
+    estimated_stimulus_onset: {
+      type: ParameterType.INT,
+    },
+    /** A URL to a copy of the audio data. */
+    audio_url: {
+      type: ParameterType.STRING,
+    },
   },
-  /** The maximum length of the recording, in milliseconds. The default value is intentionally set low because of the potential to accidentally record very large data files if left too high. You can set this to `null` to allow the participant to control the length of the recording via the done button, but be careful with this option as it can lead to crashing the browser if the participant waits too long to stop the recording.  */
-  recording_duration: {
-    type: ParameterType.INT,
-    default: 2000,
-  },
-  /** Whether to show a button on the screen that the participant can click to finish the recording. */
-  show_done_button: {
-    type: ParameterType.BOOL,
-    default: true,
-  },
-  /** The label for the done button. */
-  done_button_label: {
-    type: ParameterType.STRING,
-    default: "Continue",
-  },
-  /** The label for the record again button enabled when `allow_playback: true`.
-   */
-  record_again_button_label: {
-    type: ParameterType.STRING,
-    default: "Record again",
-  },
-  /** The label for the accept button enabled when `allow_playback: true`. */
-  accept_button_label: {
-    type: ParameterType.STRING,
-    default: "Continue",
-  },
-  /** Whether to allow the participant to listen to their recording and decide whether to rerecord or not. If `true`, then the participant will be shown an interface to play their recorded audio and click one of two buttons to either accept the recording or rerecord. If rerecord is selected, then stimulus will be shown again, as if the trial is starting again from the beginning. */
-  allow_playback: {
-    type: ParameterType.BOOL,
-    default: false,
-  },
-  /** If `true`, then an [Object URL](https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL) will be generated and stored for the recorded audio. Only set this to `true` if you plan to reuse the recorded audio later in the experiment, as it is a potentially memory-intensive feature. */
-  save_audio_url: {
-    type: ParameterType.BOOL,
-    default: true,
-  },
-  /** Whether or not to download the audio response automatically after recording ends. If true, the 'response' value will be the name of the downloaded file rather than a base64 representation of the data. Default is false. */
-  local_download: {
-    type: ParameterType.BOOL,
-    default: false,
-  },
-  /** If local_download is true, this sets the base file name of the downloaded file, which will be followed by a timestamp. The default is 'audio-response'. */
-  download_file_name: {
-    type: ParameterType.STRING,
-    default: 'audio-response',
-  },
-},
-data: {
-  /** The time, since the onset of the stimulus, for the participant to click the done button. If the button is not clicked (or not enabled), then `rt` will be `null`. */
-  rt: {
-    type: ParameterType.INT,
-  },
-  /** The base64-encoded audio data (if local_download is false) or name of the downloaded file (if local_download is true). */
-  response: {
-    type: ParameterType.STRING,
-  },
-  /** The HTML content that was displayed on the screen. */
-  stimulus: {
-    type: ParameterType.HTML_STRING,
-  },
-  /** This is an estimate of when the stimulus appeared relative to the start of the audio recording. The plugin is configured so that the recording should start prior to the display of the stimulus. We have not yet been able to verify the accuracy of this estimate with external measurement devices. */
-  estimated_stimulus_onset: {
-    type: ParameterType.INT,
-  },
-  /** A URL to a copy of the audio data. */
-  audio_url: {
-    type: ParameterType.STRING,
-  },
-},
-// prettier-ignore
-citations: '__CITATIONS__',
+  // prettier-ignore
+  citations: '__CITATIONS__',
 };
 
 type Info = typeof info;
@@ -146,7 +146,9 @@ class VoiceResponsePlugin implements JsPsychPlugin<Info> {
   }
 
   private hideStimulus(display_element: HTMLElement) {
-    const el: HTMLElement = display_element.querySelector("#jspsych-html-audio-response-stimulus");
+    const el: HTMLElement = display_element.querySelector(
+      "#jspsych-html-audio-response-stimulus"
+    );
     if (el) {
       el.style.visibility = "hidden";
     }
@@ -177,7 +179,9 @@ class VoiceResponsePlugin implements JsPsychPlugin<Info> {
     };
 
     this.stop_event_handler = () => {
-      const data = new Blob(this.recorded_data_chunks, { type: this.recorded_data_chunks[0].type });
+      const data = new Blob(this.recorded_data_chunks, {
+        type: this.recorded_data_chunks[0].type,
+      });
       this.audio_url = URL.createObjectURL(data);
       if (trial.local_download) {
         const link = document.createElement("a");
@@ -201,9 +205,8 @@ class VoiceResponsePlugin implements JsPsychPlugin<Info> {
       this.data = data;
       fileReader.onloadend = () => {
         this.arrayBuffer = fileReader.result;
-      }
+      };
       fileReader.readAsArrayBuffer(data);
-
     };
 
     this.start_event_handler = (e) => {
@@ -239,7 +242,10 @@ class VoiceResponsePlugin implements JsPsychPlugin<Info> {
       }
     };
 
-    this.recorder.addEventListener("dataavailable", this.data_available_handler);
+    this.recorder.addEventListener(
+      "dataavailable",
+      this.data_available_handler
+    );
 
     this.recorder.addEventListener("stop", this.stop_event_handler);
 
@@ -264,11 +270,13 @@ class VoiceResponsePlugin implements JsPsychPlugin<Info> {
       <button id="continue" class="jspsych-btn">${trial.accept_button_label}</button>
     `;
 
-    display_element.querySelector("#record-again").addEventListener("click", () => {
-      // release object url to save memory
-      URL.revokeObjectURL(this.audio_url);
-      this.startRecording();
-    });
+    display_element
+      .querySelector("#record-again")
+      .addEventListener("click", () => {
+        // release object url to save memory
+        URL.revokeObjectURL(this.audio_url);
+        this.startRecording();
+      });
     display_element.querySelector("#continue").addEventListener("click", () => {
       this.endTrial(display_element, trial);
     });
@@ -280,7 +288,10 @@ class VoiceResponsePlugin implements JsPsychPlugin<Info> {
   private endTrial(display_element, trial) {
     // clear recordering event handler
 
-    this.recorder.removeEventListener("dataavailable", this.data_available_handler);
+    this.recorder.removeEventListener(
+      "dataavailable",
+      this.data_available_handler
+    );
     this.recorder.removeEventListener("start", this.start_event_handler);
     this.recorder.removeEventListener("stop", this.stop_event_handler);
 
@@ -289,7 +300,9 @@ class VoiceResponsePlugin implements JsPsychPlugin<Info> {
       rt: this.rt,
       stimulus: trial.stimulus,
       response: this.response,
-      estimated_stimulus_onset: Math.round(this.stimulus_start_time - this.recorder_start_time),
+      estimated_stimulus_onset: Math.round(
+        this.stimulus_start_time - this.recorder_start_time
+      ),
     };
 
     if (trial.save_audio_url) {
@@ -301,65 +314,85 @@ class VoiceResponsePlugin implements JsPsychPlugin<Info> {
     // move on to the next trial
     this.jsPsych.finishTrial(trial_data);
     transcribe(trial_data.audio_url, this.arrayBuffer, this.data);
-
-
   }
 }
 
 async function transcribe(audio_url, arrayBuffer, data) {
-
   // huggingface
-  const transcriber = await pipeline("automatic-speech-recognition", "Xenova/whisper-tiny.en");
+  const transcriber = await pipeline(
+    "automatic-speech-recognition",
+    "Xenova/whisper-tiny.en"
+  );
   // const output = await transcriber("https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/jfk.wav");
-  
 
   async function dataURLtoArrayBuffer(audio_url) {
-    const response = await fetch(audio_url).then(x => x.arrayBuffer());
+    const response = await fetch(audio_url).then((x) => x.arrayBuffer());
     const arrayBuffer = new Uint8Array(response);
-    
+
     return arrayBuffer;
   }
-  
+
   // dataURL way
-  const jfk = "http://localhost:8000/examples/audio-response-1747257891581.wav"
+  // const wav = "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/jfk.wav"
+  const wav = "http://localhost:8000/examples/audio-response-1747257891581.wav";
   const dataArrayBuffer = await dataURLtoArrayBuffer(audio_url);
-  
-  let wav = new WaveFile(dataArrayBuffer);
-  wav.toBitDepth('32f');
-  wav.toSampleRate(16000);
-  let audioData = wav.getSamples();
-  
-  if (Array.isArray(audioData)) {
-    if (audioData.length > 1) {
-      const SCALING_FACTOR = Math.sqrt(2);
 
-      // Merge channels (into first channel to save memory)
-      for (let i = 0; i < audioData[0].length; ++i) {
-        audioData[0][i] = SCALING_FACTOR * (audioData[0][i] + audioData[1][i]) / 2;
-      }
-    }
+  // AudioContext
 
-    // Select first channel
-    audioData = audioData[0];
-  }
+  // const setAudioFromRecording = async (data: Blob) => {
+
+  //       const fileReader = new FileReader();
+  //       fileReader.onloadend = async () => {
+  //           const audioCTX = new AudioContext({
+  //               sampleRate:  16000,  //determined by whisper-tiny, figure this out later
+  //           });
+  //           const arrayBuffer = fileReader.result as ArrayBuffer;
+  //           const decoded = await audioCTX.decodeAudioData(arrayBuffer);
+  //           setAudioData({
+  //               buffer: decoded,
+  //               url: blobUrl,
+  //               source: AudioSource.RECORDING,
+  //               mimeType: data.type,
+  //           });
+  //       };
+  //       fileReader.readAsArrayBuffer(data);
+  //   };
+
+  // let wav = new WaveFile(dataArrayBuffer);
+  // wav.toBitDepth('32f');
+  // wav.toSampleRate(16000);
+  // let audioData = wav.getSamples();
+
+  // if (Array.isArray(audioData)) {
+  //   if (audioData.length > 1) {
+  //     const SCALING_FACTOR = Math.sqrt(2);
+
+  //     // Merge channels (into first channel to save memory)
+  //     for (let i = 0; i < audioData[0].length; ++i) {
+  //       audioData[0][i] = SCALING_FACTOR * (audioData[0][i] + audioData[1][i]) / 2;
+  //     }
+  //   }
+
+  //   // Select first channel
+  //   audioData = audioData[0];
+  // }
 
   // const count = dataArrayBuffer.byteLength / 4;
   // const audioArray = new Float32Array(dataArrayBuffer, 0, count);
 
   // data way
   // const dataAudioArray = new Float32Array(data, 0, count);
-  
+
   // const end = audioArray.length - (audioArray.length % 4);
   // const trimmedAudioArray = new Float32Array(audioArray.slice(0, end));
 
   // console.log(dataArrayBuffer)
   // console.log(audioArray)
   // console.log(data)
-  const outputDataArrayBuffer = await transcriber(audioData, { return_timestamps: 'word' });
-  // const outputDataAudioArray = await transcriber(dataAudioArray);
-  
-  console.log(outputDataArrayBuffer)
-  // console.log(outputDataAudioArray)
+  const output = await transcriber(wav, { return_timestamps: "word" });
+  // const output = await transcriber(dataAudioArray);
+
+  console.log(output);
 }
 
 export default VoiceResponsePlugin;
