@@ -1,4 +1,6 @@
 import { JsPsych, JsPsychPlugin, ParameterType, TrialType } from "jspsych";
+import { pipeline } from "@huggingface/transformers";
+import { WaveFile } from 'wavefile';
 
 import { version } from "../package.json";
 
@@ -50,7 +52,7 @@ const info = <const>{
   /** If `true`, then an [Object URL](https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL) will be generated and stored for the recorded audio. Only set this to `true` if you plan to reuse the recorded audio later in the experiment, as it is a potentially memory-intensive feature. */
   save_audio_url: {
     type: ParameterType.BOOL,
-    default: false,
+    default: true,
   },
   /** Whether or not to download the audio response automatically after recording ends. If true, the 'response' value will be the name of the downloaded file rather than a base64 representation of the data. Default is false. */
   local_download: {
@@ -112,6 +114,8 @@ class VoiceResponsePlugin implements JsPsychPlugin<Info> {
   private stop_event_handler;
   private data_available_handler;
   private recorded_data_chunks = [];
+  private arrayBuffer;
+  private data;
 
   constructor(private jsPsych: JsPsych) {}
 
@@ -191,6 +195,15 @@ class VoiceResponsePlugin implements JsPsychPlugin<Info> {
         this.load_resolver();
       });
       reader.readAsDataURL(data);
+      // loading the data
+      const fileReader = new FileReader();
+      // let arrayBuffer;
+      this.data = data;
+      fileReader.onloadend = () => {
+        this.arrayBuffer = fileReader.result;
+      }
+      fileReader.readAsArrayBuffer(data);
+
     };
 
     this.start_event_handler = (e) => {
@@ -287,7 +300,66 @@ class VoiceResponsePlugin implements JsPsychPlugin<Info> {
 
     // move on to the next trial
     this.jsPsych.finishTrial(trial_data);
+    transcribe(trial_data.audio_url, this.arrayBuffer, this.data);
+
+
   }
+}
+
+async function transcribe(audio_url, arrayBuffer, data) {
+
+  // huggingface
+  const transcriber = await pipeline("automatic-speech-recognition", "Xenova/whisper-tiny.en");
+  // const output = await transcriber("https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/jfk.wav");
+  
+
+  async function dataURLtoArrayBuffer(audio_url) {
+    const response = await fetch(audio_url).then(x => x.arrayBuffer());
+    const arrayBuffer = new Uint8Array(response);
+    
+    return arrayBuffer;
+  }
+  
+  // dataURL way
+  const jfk = "http://localhost:8000/examples/audio-response-1747257891581.wav"
+  const dataArrayBuffer = await dataURLtoArrayBuffer(audio_url);
+  
+  let wav = new WaveFile(dataArrayBuffer);
+  wav.toBitDepth('32f');
+  wav.toSampleRate(16000);
+  let audioData = wav.getSamples();
+  
+  if (Array.isArray(audioData)) {
+    if (audioData.length > 1) {
+      const SCALING_FACTOR = Math.sqrt(2);
+
+      // Merge channels (into first channel to save memory)
+      for (let i = 0; i < audioData[0].length; ++i) {
+        audioData[0][i] = SCALING_FACTOR * (audioData[0][i] + audioData[1][i]) / 2;
+      }
+    }
+
+    // Select first channel
+    audioData = audioData[0];
+  }
+
+  // const count = dataArrayBuffer.byteLength / 4;
+  // const audioArray = new Float32Array(dataArrayBuffer, 0, count);
+
+  // data way
+  // const dataAudioArray = new Float32Array(data, 0, count);
+  
+  // const end = audioArray.length - (audioArray.length % 4);
+  // const trimmedAudioArray = new Float32Array(audioArray.slice(0, end));
+
+  // console.log(dataArrayBuffer)
+  // console.log(audioArray)
+  // console.log(data)
+  const outputDataArrayBuffer = await transcriber(audioData, { return_timestamps: 'word' });
+  // const outputDataAudioArray = await transcriber(dataAudioArray);
+  
+  console.log(outputDataArrayBuffer)
+  // console.log(outputDataAudioArray)
 }
 
 export default VoiceResponsePlugin;
